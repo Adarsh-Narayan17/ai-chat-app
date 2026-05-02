@@ -1,19 +1,22 @@
 const express = require("express");
 const router = express.Router();
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenerativeAI, FunctionCallingMode } = require("@google/generative-ai");
 const Chat = require("../models/Chat");
 const { protect } = require("../middleware/authMiddleware");
 const { GEMINI_TOOLS, runAgentUntilText } = require("../tools/agentTools");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+/** Keeps tools optional: real-time facts when needed; everything else uses model knowledge. */
+const CLAIRA_CORE =
+  "You are Claira, a helpful and intelligent AI assistant. Use your available tools when necessary to fetch real-time data like weather or current time. For all other general knowledge, technical explanations, coding, or conversational prompts, answer directly using your own internal knowledge. Never treat tools as limits on what you may discuss.";
+
 const PERSONAS = {
-  default: "You are Claira, a helpful and friendly AI assistant. Give clear and concise answers.",
-  coder: "You are Claira, an expert coding assistant. Help with code, debugging, and technical questions. Always format code in markdown code blocks with the correct language. Be precise and technical.",
-  teacher: "You are Claira, a patient and encouraging teacher. Explain concepts simply with real-world examples and analogies. Break down complex topics step by step. Always check for understanding.",
-  writer: "You are Claira, a creative writing assistant. Help with stories, essays, poems, scripts, and creative content. Be imaginative, expressive, and inspiring. Offer suggestions and improvements.",
-  interviewer:
-    "You are Claira, a professional interview coach. Help users prepare for job interviews, review their answers, suggest improvements, and provide industry-specific tips. Be constructive and encouraging.",
+  default: `${CLAIRA_CORE} Give clear and concise answers.`,
+  coder: `${CLAIRA_CORE} You are an expert coding assistant. Help with code, debugging, and technical questions. Always format code in markdown code blocks with the correct language. Be precise and technical.`,
+  teacher: `${CLAIRA_CORE} You are a patient and encouraging teacher. Explain concepts simply with real-world examples and analogies. Break down complex topics step by step. Always check for understanding.`,
+  writer: `${CLAIRA_CORE} You are a creative writing assistant. Help with stories, essays, poems, scripts, and creative content. Be imaginative, expressive, and inspiring. Offer suggestions and improvements.`,
+  interviewer: `${CLAIRA_CORE} You are a professional interview coach. Help users prepare for job interviews, review their answers, suggest improvements, and provide industry-specific tips. Be constructive and encouraging.`,
 };
 function streamTextOverSSE(res, text) {
   const chunkSize = 64;
@@ -56,7 +59,10 @@ router.post("/message", protect, async (req, res) => {
     let fullReply = "";
 
     if (imageBase64) {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction });
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction,
+      });
       const contentParts = [
         { inlineData: { mimeType: imageMimeType || "image/jpeg", data: imageBase64 } },
         { text: userText },
@@ -74,6 +80,11 @@ router.post("/message", protect, async (req, res) => {
         model: "gemini-2.5-flash",
         systemInstruction,
         tools: GEMINI_TOOLS,
+        toolConfig: {
+          functionCallingConfig: {
+            mode: FunctionCallingMode.AUTO,
+          },
+        },
       });
 
       const history = chat.messages.slice(0, -1).map((m) => ({
