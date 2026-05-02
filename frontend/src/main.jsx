@@ -4,7 +4,7 @@ import App from "./App.jsx";
 import "./index.css";
 import axios from "axios";
 
-// ✅ Auto-attach token to every request
+// Auto-attach token to every request
 const user = localStorage.getItem("user");
 if (user) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${JSON.parse(user).token}`;
