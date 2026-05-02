@@ -11,7 +11,7 @@ const chatRoutes = require("./routes/chat");
 const app = express();
 
 // ✅ FIXED: Added 20mb limit for image uploads
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 

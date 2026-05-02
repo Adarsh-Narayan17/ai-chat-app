@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
+import { apiUrl } from "../apiBase";
 
 const authHeader = () => {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -78,14 +79,14 @@ export default function Chat() {
 
   const fetchHistory = async () => {
     try {
-      const { data } = await axios.get("/api/chat/history", { headers: authHeader() });
+      const { data } = await axios.get(apiUrl("/api/chat/history"), { headers: authHeader() });
       setChatHistory(data);
     } catch (err) { console.error("fetchHistory error:", err.response?.data || err.message); }
   };
 
   const loadChat = async (id) => {
     try {
-      const { data } = await axios.get(`/api/chat/${id}`, { headers: authHeader() });
+      const { data } = await axios.get(apiUrl(`/api/chat/${id}`), { headers: authHeader() });
       setChatId(data._id);
       setMessages(data.messages);
     } catch (err) { console.error("loadChat error:", err.response?.data || err.message); }
@@ -96,7 +97,7 @@ export default function Chat() {
   const deleteChat = async (e, id) => {
     e.stopPropagation();
     try {
-      await axios.delete(`/api/chat/${id}`, { headers: authHeader() });
+      await axios.delete(apiUrl(`/api/chat/${id}`), { headers: authHeader() });
       if (chatId === id) newChat();
       setChatHistory((prev) => prev.filter((c) => c._id !== id));
     } catch (err) { console.error(err); }
@@ -136,7 +137,7 @@ export default function Chat() {
 
     try {
       const token = JSON.parse(localStorage.getItem("user"))?.token;
-      const response = await fetch("/api/chat/message", {
+      const response = await fetch(apiUrl("/api/chat/message"), {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({

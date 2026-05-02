@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { apiUrl } from "../apiBase";
 
 export default function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
@@ -18,7 +19,7 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      const { data } = await axios.post("/api/auth/register", form);
+      const { data } = await axios.post(apiUrl("/api/auth/register"), form);
       login(data);
       navigate("/chat");
     } catch (err) {

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { apiUrl } from "../apiBase";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -15,7 +16,7 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      const { data } = await axios.post("/api/auth/login", form);
+      const { data } = await axios.post(apiUrl("/api/auth/login"), form);
       login(data);
       navigate("/chat");
     } catch (err) {
